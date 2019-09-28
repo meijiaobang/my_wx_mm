@@ -1,0 +1,40 @@
+/* pages/comment/comment.wxss */
+/* 背景图片 模糊 */
+.detail-container{
+  height: 400rpx;
+  opacity: .9;/*透明度*/ 
+  filter: blur(40rpx);/*高斯模糊滤镜*/
+}
+/* 添加遮罩层 */
+.detail-mask{
+  position: absolute;/*绝对定位*/
+  left:0;
+  top:0;
+  z-index: -1;/*让它显示在模糊图片底层*/
+  width: 100%;
+  height: 400rpx;
+  background:#333333;
+}
+/* 电影详情信息 */
+.detail-infod{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 400rpx;
+  padding: 20rpx;
+  display: flex;
+}
+/* 左侧图片 */
+.detail-img{
+  width: 280rpx;
+  height: 90%;
+  margin-right: 24rpx;
+}
+
+
+
+
+
+
+
