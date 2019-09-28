@@ -22,6 +22,21 @@
     </view>
   </view>
 <!-- 电影描述 -->
+<view class="desc">电影描述四达施奈德斯诺登斯诺登是你的事你</view>
 <!-- 评论输入 -->
+  <van-field
+    value="{{ value1 }}"
+    placeholder="请输入"
+    border="{{ false }}"
+    bind:change="onContentChange"
+  />
 <!-- 打分输入 -->
+<van-rate value="{{ value }}" bind:change="onChangeScore" />
 <!-- 上传图片按钮（选中图片） -->
+<van-button type="warning" size="large">上传图片</van-button>
+<!-- 图片预览区域 -->
+<view>
+  
+</view>
+<!-- 发表评论 -->
+<van-button type="default" size="large">发表评论</van-button>
