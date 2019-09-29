@@ -8,9 +8,34 @@ Page({
     value1:"",//存用户输入评论
     score:0,//评分
     movieid:25779217,//电影id
-    detail:{}//js对象保存当前电影信息-
+    detail:{},//js对象保存当前电影信息-
+    images:[]
   },
+// 图片上传 // 功能：选中图片并且实现预览图片
+  uploadFile:function(){
+    // 在data中声明属性images保存预览图片
 
+    // 选中最多9张图片
+    // 图片类型 原图 压缩图
+    // 图片来源 相册 相机
+    // 选中成功
+    wx.chooseImage({
+      count: 9,
+      sizeType: ['original', 'compressed'],
+      sourceType: ['album', 'camera'],
+      success:(res)=> {//选中成功
+        // tempFilePath可以作为img标签的src属性显示图片
+        // const tempFilePaths = res.tempFilePaths
+        // 获取选中图片路径
+        var list =res.tempFilePaths;//临时路径
+        this.setData({
+          // 保存data中images属性
+          images:list
+        });
+      },
+    })
+    // 在模板中显示选中图片列表
+      },
   /*用户输入内容触发事件*/
   onContentChange: function (event){
     // event.detail 为当前输入的值
@@ -31,7 +56,6 @@ Page({
    */
   // 获取参数
   onLoad: function (options) {
-    console.log(options.id);
     // 获取id并保存
     this.setData({
       movieid:options.id
@@ -55,12 +79,15 @@ Page({
     // 获取返回数据
     .then(res=>{console.log(res)
 // 对数据进行转换
+      console.log(`res.result${res.result}`)
     var obj=JSON.parse(res.result);
       // 保存
+      console.log(`obj${obj}`)
       this.setData({
         // 到js数组对象
         detail: obj
       })
+      console.log('数据'+this.data. detail)
       // 隐藏加载提示框
       wx.hideLoading();
     })

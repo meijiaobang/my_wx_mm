@@ -33,7 +33,7 @@ Page({
       // 参数放在data里面
       data:{
         start:offset,//页数
-        count:4//总页数
+        count:4//行数
       }
       }).then((res)=>{
         // 得到返回的字符串
