@@ -1,97 +1,174 @@
 // pages/comment/comment.js
-Page({
+//创建数据库对象
+const db = wx.cloud.database();
 
+Page({
   /**
    * 页面的初始数据
    */
   data: {
-    value1:"",//存用户输入评论
-    score:0,//评分
-    movieid:25779217,//电影id
-    detail:{},//js对象保存当前电影信息-
-    images:[]
+    value1:"",          //保存用户评论信息
+    score:0,            //保存用户评价分数
+    movieid:25779217,   //电影id
+    detail:{},          //js对象当前电影信息
+    images:[],          //选中图片(预览时图片)
+    fileIds:[]          //上传图片id
   },
-// 图片上传 // 功能：选中图片并且实现预览图片
-  uploadFile:function(){
-    // 在data中声明属性images保存预览图片
+  comment:function(){
+    //0:判断如果当前用户没有选择图片（可选）
+    if(this.data.images.length==0){
+     //1:提示请先选择图片
+     wx.showToast({
+       title: '请选择图片',
+       icon: 'success',
+     })
+     //2:停止函数执行
+     return; 
+    }
+    //功能:
+    //(1)获取用户评论信息
+    //(2)上传多张图片
+    //(3)将用户评论信息与图片fileID保存云数据库
+    //1:在云数据库中创建集合comment 用户评论信息
+    //2:在添加添加属性 fileIds:[]  上传文件id
+    //3:显示数据加载提示框
+    wx.showLoading({
+      title: '评论正发表中....',
+    });
+    //4:创建数组 rows  保存Promise对象
+    var rows = [];
+    //5:创建循环遍历每张选中图片
+    for(var i=0;i<this.data.images.length;i++){
+     //6:为每张创建 Promise对象完成上传一张
+     rows.push(new Promise((resolve,reject)=>{
+       //6.1 获取当前图片名称
+       var item = this.data.images[i];
+       //6.2 获取后缀（折分/搜索/正则表达式）
+       //123.jpg .jpg=>exec()=>[.png]
+       var suffix = /\.\w+$/.exec(item)[0]
+       //6.3 创建新文件名 时间+随机数
+       var newFile = new Date().getTime();
+       newFile+=Math.floor(Math.random()*9999);
+       newFile+=suffix;
+       //6.4 上传一张图片
+       wx.cloud.uploadFile({
+          cloudPath:newFile, //新文件名
+          filePath:item,     //原文件名 
+          success:(res=>{
+           //6.5 在data属性添加数组 fileIds文件id
+           //6.6 上传成功将fileID保存
+           var fid = res.fileID;
+           this.data.fileIds.push(fid); 
+           //6.7 上传成功后执行 解析
+           resolve();
+          })
+       })
 
-    // 选中最多9张图片
-    // 图片类型 原图 压缩图
-    // 图片来源 相册 相机
-    // 选中成功
+     }));//push end 
+    }//for end 
+
+    //功能三: 将用户评论信息与图片fileID保存云数据库
+    //1:创建数据库对象
+    //1.1:等待所有Promise执行完成之后
+    //    才执行如下代码
+    Promise.all(rows).then(res=>{
+     //2:获取用户评论内容
+     var content = this.data.value1;
+     //3:获取用户评分
+     var score = this.data.score;
+     //4:当前电影id
+     var id = this.data.movieid;
+     //5:图片fileIds
+     var list = this.data.fileIds;
+     //6:*添加集合 comment
+     db.collection("comment").add({
+        data:{
+          content: content,//评论内容
+          score: score,    //评论分数
+          movieid:id,      //电影id
+          filesIds:list    //图片fileID
+        }
+     }).then(res=>{
+      //7:添加成功 隐藏加载提示框
+      wx.hideLoading();
+      //8:提示评论成功
+      wx.showToast({
+        title: '发表成功',
+      })
+     }).catch(err=>{
+     })
+    })
+  },
+  uploadFile:function(){
+    //功能:选中图片并且实现预览图片
+    //1:在data声明属性images 保存预览图片 
+    //2:选中最多9张图片 
+    //3:图片类型 原图 压缩图
+    //4:图片来源 相册 相机
+    //5:选中成功
     wx.chooseImage({
-      count: 9,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['album', 'camera'],
-      success:(res)=> {//选中成功
-        // tempFilePath可以作为img标签的src属性显示图片
-        // const tempFilePaths = res.tempFilePaths
-        // 获取选中图片路径
-        var list =res.tempFilePaths;//临时路径
-        this.setData({
-          // 保存data中images属性
-          images:list
-        });
+      count:9,//9张图片
+      sizeType:["original","compressed"],
+      sourceType:["album","camera"],
+      success:(res)=>{//选中成功
+      //6:获取选中图片路径
+      var list = res.tempFilePaths;//临时路径
+      //7:保存data中images属性
+      this.setData({
+        images:list
+      });
+      //8:在模板中显示选中图片列表
       },
     })
-    // 在模板中显示选中图片列表
-      },
-  /*用户输入内容触发事件*/
-  onContentChange: function (event){
-    // event.detail 为当前输入的值
+  },
+  onContentChange:function(event){
+    //当用户输入内容在文本框触发事件
+    //console.log(event.detail);
     this.setData({
-      // 获取当前用户评论
       value1:event.detail
     })
   },
-  /*分数*/
   onChangeScore:function(event){
-    //获取当前用户评论分数
+    //功能:获取当前用户评论
+    //console.log(event.detail);
     this.setData({
       score:event.detail
     })
   },
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  // 获取参数
   onLoad: function (options) {
-    // 获取id并保存
+    //功能:获取home组件传递id并且保存
     this.setData({
-      movieid:options.id
-    })
-    //组建创建成功后调用云函数获得详情
-    this.loadMore()
+      movieid:25779217
+    });
+    this.loadMore();
   },
-  // 调用云函数获取指定id的电影详情
   loadMore:function(){
-    // 获取用户选中电影id
-    var id=this.data.movieid
-    // 显示数据加载提示框
+    //功能:组件创建成功后调用云函数
+    //1:获取用户选中电影id   50
+    var id = this.data.movieid;
+    console.log(id);
+    //2:显示数据加载提示框
     wx.showLoading({
       title: '正在加载中...',
     })
-    // 调用云函数
+    //3:调用云函数 findDetail1905 id
     wx.cloud.callFunction({
-      name:"findDetail",//云函数
-      data:{id:id}//参数
-    })
-    // 获取返回数据
-    .then(res=>{console.log(res)
-// 对数据进行转换
-      console.log(`res.result${res.result}`)
-    var obj=JSON.parse(res.result);
-      // 保存
-      console.log(`obj${obj}`)
+      name:"findDetail",//加载详情云函数
+      data:{id:id}
+    }).then(res=>{
+      console.log(res);
+      //4:获取云函数返回数据
+      var obj = JSON.parse(res.result);
+      //5:保存 detail:{}
       this.setData({
-        // 到js数组对象
-        detail: obj
+        detail:obj
       })
-      console.log('数据'+this.data. detail)
-      // 隐藏加载提示框
+      //6:隐藏加载提示框
       wx.hideLoading();
+    }).catch(err=>{
+      console.log(err);
     })
-    .catch(err=>{console.log(err)})
+
   },
 
   /**
